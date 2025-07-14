@@ -1,26 +1,28 @@
 {
   "name": "cli-companion",
-  "displayName": "cli-companion",
+  "displayName": "CLI Companion",
   "description": "A command palette companion for common CLI snippets (Docker, Git, etc.)",
   "version": "0.0.1",
   "engines": {
-    "vscode": "^1.102.0"
+    "vscode": "^1.80.0"
   },
-  "categories": [
-    "Other"
-  ],
-  "activationEvents": [],
+  "categories": ["Other"],
   "main": "./extension.js",
+  "activationEvents": [
+    "onCommand:cliCompanion.showCLI"
+  ],
   "contributes": {
-    "commands": [{
-      "command": "cli-companion.helloWorld",
-      "title": "Hello World"
-    }]
+    "commands": [
+      {
+        "command": "cliCompanion.showCLI",
+        "title": "CLI Companion: Show Command Palette"
+      }
+    ]
   },
   "scripts": {
     "lint": "eslint .",
     "pretest": "npm run lint",
-    "test": "vscode-test"
+    "test": "node ./test/runTest.js"
   },
   "devDependencies": {
     "@types/vscode": "^1.102.0",

@@ -1,36 +1,30 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 const vscode = require('vscode');
+const cliCommands = require('./cliCommands');
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
-
-/**
- * @param {vscode.ExtensionContext} context
- */
 function activate(context) {
+  console.log('🚀 CLI Companion is now active!');
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "cli-companion" is now active!');
+  const showCLICmd = vscode.commands.registerCommand('cliCompanion.showCLI', async () => {
+    const selected = await vscode.window.showQuickPick(
+      cliCommands.map(cmd => ({
+        label: cmd.label,
+        description: cmd.command
+      })),
+      { placeHolder: "Search CLI commands..." }
+    );
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with  registerCommand
-	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerCommand('cli-companion.helloWorld', function () {
-		// The code you place here will be executed every time your command is executed
+    if (selected) {
+      await vscode.env.clipboard.writeText(selected.description);
+      vscode.window.showInformationMessage(`📋 Copied to clipboard: ${selected.description}`);
+    }
+  });
 
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from cli-companion!');
-	});
-
-	context.subscriptions.push(disposable);
+  context.subscriptions.push(showCLICmd);
 }
 
-// This method is called when your extension is deactivated
 function deactivate() {}
 
 module.exports = {
-	activate,
-	deactivate
-}
+  activate,
+  deactivate
+};
