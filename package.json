@@ -11,13 +11,17 @@
   ],
   "main": "./extension.js",
   "activationEvents": [
-    "onCommand:cliCompanion.showCLI"
+      "onCommand:cliCompanion.showCLI"
   ],
   "contributes": {
     "commands": [
       {
         "command": "cliCompanion.showCLI",
         "title": "CLI Companion: Show Command Palette"
+      },
+      {
+        "command": "cliCompanion.showFloating",
+        "title": "CLI Companion: Show Floating UI"
       }
     ]
   },

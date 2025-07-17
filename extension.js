@@ -1,20 +1,25 @@
 const vscode = require('vscode');
-const fs = require('fs');
 const path = require('path');
+const fs = require('fs');
+const cliCommands = require('./cliCommands/index'); // ✅ Moved to global
 
 function activate(context) {
-  const disposable = vscode.commands.registerCommand('cliCompanion.showCLI', () => {
+  console.log('🚀 CLI Companion is now active!');
+
+  // 📌 Command: CLI Palette View
+  const showCLICommand = vscode.commands.registerCommand('cliCompanion.showCLI', () => {
     const panel = vscode.window.createWebviewPanel(
       'cliCompanion',
-      'CLI Companion',
-      vscode.ViewColumn.One,
+      '🧭 CLI Companion',
+      { viewColumn: vscode.ViewColumn.Beside, preserveFocus: true },
       {
-        enableScripts: true
+        enableScripts: true,
+        retainContextWhenHidden: true
       }
     );
 
-    const cliCommands = require('./cliCommands/index');
     panel.webview.html = getWebviewContent(cliCommands);
+
     panel.webview.onDidReceiveMessage(
       message => {
         if (message.command === 'copy') {
@@ -27,82 +32,34 @@ function activate(context) {
     );
   });
 
-  context.subscriptions.push(disposable);
+  // 📌 Command: Floating UI
+  const showFloatingCommand = vscode.commands.registerCommand('cliCompanion.showFloating', () => {
+    const panel = vscode.window.createWebviewPanel(
+      'cliFloating',
+      '🧊 CLI Companion (Floating)',
+      vscode.ViewColumn.Beside,
+      {
+        enableScripts: true,
+        retainContextWhenHidden: true
+      }
+    );
+
+    panel.webview.html = getWebviewContent(cliCommands);
+
+    panel.webview.onDidReceiveMessage(
+      message => {
+        if (message.command === 'copy') {
+          vscode.env.clipboard.writeText(message.text);
+          panel.webview.postMessage({ command: 'copied' });
+        }
+      },
+      undefined,
+      context.subscriptions
+    );
+  });
+
+  context.subscriptions.push(showCLICommand, showFloatingCommand);
 }
-
-// function getWebviewContent(commands) {
-//   const categories = [...new Set(commands.map(cmd => cmd.category))];
-//   const commandsJSON = JSON.stringify(commands);
-
-//   return `
-//   <!DOCTYPE html>
-//   <html lang="en">
-//   <head>
-//     <meta charset="UTF-8">
-//     <style>
-//       body { font-family: sans-serif; padding: 20px; }
-//       .category { font-weight: bold; margin-top: 16px; }
-//       .command { margin: 8px 0; cursor: pointer; padding: 6px; background: #f3f3f3; border-radius: 4px; }
-//       .command:hover { background: #e0e0e0; }
-//       #searchInput { margin-bottom: 12px; width: 100%; padding: 8px; }
-//     </style>
-//   </head>
-//   <body>
-//     <input type="text" id="searchInput" placeholder="Search command or tag..." />
-//     <div id="commandsContainer"></div>
-
-//     <script>
-//       const vscode = acquireVsCodeApi();
-//       const allCommands = ${commandsJSON};
-
-//       function renderCommands(filter = '') {
-//         const container = document.getElementById('commandsContainer');
-//         container.innerHTML = '';
-
-//         const grouped = {};
-//         allCommands.forEach(cmd => {
-//           if (!cmd.category) return;
-//           if (!grouped[cmd.category]) grouped[cmd.category] = [];
-//           if (
-//             cmd.label.toLowerCase().includes(filter.toLowerCase()) || 
-//             cmd.command.toLowerCase().includes(filter.toLowerCase())
-//           ) {
-//             grouped[cmd.category].push(cmd);
-//           }
-//         });
-
-//         for (const cat in grouped) {
-//           const section = document.createElement('div');
-//           section.innerHTML = \`<div class="category">\${cat}</div>\`;
-//           grouped[cat].forEach(cmd => {
-//             const cmdDiv = document.createElement('div');
-//             cmdDiv.className = 'command';
-//             cmdDiv.textContent = cmd.label;
-//             cmdDiv.onclick = () => {
-//               vscode.postMessage({ command: 'copy', text: cmd.command });
-//             };
-//             section.appendChild(cmdDiv);
-//           });
-//           container.appendChild(section);
-//         }
-//       }
-
-//       renderCommands();
-
-//       document.getElementById('searchInput').addEventListener('input', (e) => {
-//         renderCommands(e.target.value);
-//       });
-
-//       window.addEventListener('message', event => {
-//         const message = event.data;
-//         if (message.command === 'copied') {
-//           alert('Copied to clipboard!');
-//         }
-//       });
-//     </script>
-//   </body>
-//   </html>`;
-// }
 
 function getWebviewContent(commands) {
   const commandsJSON = JSON.stringify(commands);
@@ -116,21 +73,18 @@ function getWebviewContent(commands) {
     <style>
       body {
         margin: 0;
-        padding: 24px;
+        padding: 12px;
         font-family: 'Segoe UI', sans-serif;
-        background: linear-gradient(145deg, #1e1e2f, #2c2c3d);
+        background: transparent;
         color: #ffffff;
-        height: 100vh;
-        backdrop-filter: blur(8px);
+        backdrop-filter: blur(6px);
       }
 
       .glass {
-        background: rgba(255, 255, 255, 0.06);
+        background: rgba(0, 0, 0, 0.45);
         border-radius: 12px;
-        padding: 20px;
-        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
+        padding: 16px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
         border: 1px solid rgba(255, 255, 255, 0.1);
       }
 
@@ -196,8 +150,9 @@ function getWebviewContent(commands) {
           if (!cmd.category) return;
           if (!grouped[cmd.category]) grouped[cmd.category] = [];
           if (
-            cmd.label.toLowerCase().includes(filter.toLowerCase()) || 
-            cmd.command.toLowerCase().includes(filter.toLowerCase())
+            cmd.label.toLowerCase().includes(filter.toLowerCase()) ||
+            cmd.command.toLowerCase().includes(filter.toLowerCase()) ||
+            (cmd.tags && cmd.tags.some(tag => tag.toLowerCase().includes(filter.toLowerCase())))
           ) {
             grouped[cmd.category].push(cmd);
           }
@@ -236,7 +191,6 @@ function getWebviewContent(commands) {
   </body>
   </html>`;
 }
-
 
 function deactivate() {}
 
