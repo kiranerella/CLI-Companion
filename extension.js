@@ -63,6 +63,13 @@ function activate(context) {
 
 function getWebviewContent(commands) {
   const commandsJSON = JSON.stringify(commands);
+  const allTags = Array.from(
+    new Set(commands.flatMap(cmd => cmd.tags || []))
+  ).sort();
+
+  const tagsHTML = allTags.map(tag => `
+    <button class="tag-button" data-tag="${tag}">${tag}</button>
+  `).join("");
 
   return `
   <!DOCTYPE html>
@@ -97,12 +104,39 @@ function getWebviewContent(commands) {
       #searchInput {
         width: 100%;
         padding: 10px;
-        margin-bottom: 18px;
+        margin-bottom: 12px;
         font-size: 1rem;
         border-radius: 8px;
         border: none;
         background: rgba(255, 255, 255, 0.1);
         color: white;
+      }
+
+      .tag-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+
+      .tag-button {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 20px;
+        background-color: #444;
+        color: white;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: background-color 0.2s ease;
+      }
+
+      .tag-button:hover {
+        background-color: #666;
+      }
+
+      .tag-button.active {
+        background-color: #ffd700;
+        color: black;
       }
 
       .category {
@@ -134,26 +168,30 @@ function getWebviewContent(commands) {
     <div class="glass">
       <h1>🚀 CLI Companion</h1>
       <input type="text" id="searchInput" placeholder="Search commands or tags..." />
+      <div class="tag-bar">${tagsHTML}</div>
       <div id="commandsContainer"></div>
     </div>
 
     <script>
       const vscode = acquireVsCodeApi();
       const allCommands = ${commandsJSON};
+      let selectedTag = null;
 
       function renderCommands(filter = '') {
         const container = document.getElementById('commandsContainer');
         container.innerHTML = '';
 
         const grouped = {};
+
         allCommands.forEach(cmd => {
           if (!cmd.category) return;
-          if (!grouped[cmd.category]) grouped[cmd.category] = [];
-          if (
-            cmd.label.toLowerCase().includes(filter.toLowerCase()) ||
-            cmd.command.toLowerCase().includes(filter.toLowerCase()) ||
-            (cmd.tags && cmd.tags.some(tag => tag.toLowerCase().includes(filter.toLowerCase())))
-          ) {
+
+          const labelMatch = cmd.label.toLowerCase().includes(filter.toLowerCase());
+          const commandMatch = cmd.command.toLowerCase().includes(filter.toLowerCase());
+          const tagMatch = !selectedTag || (cmd.tags && cmd.tags.includes(selectedTag));
+
+          if ((labelMatch || commandMatch) && tagMatch) {
+            if (!grouped[cmd.category]) grouped[cmd.category] = [];
             grouped[cmd.category].push(cmd);
           }
         });
@@ -180,6 +218,19 @@ function getWebviewContent(commands) {
         renderCommands(e.target.value);
       });
 
+      document.querySelectorAll('.tag-button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tag-button').forEach(b => b.classList.remove('active'));
+          if (selectedTag === btn.dataset.tag) {
+            selectedTag = null;
+          } else {
+            selectedTag = btn.dataset.tag;
+            btn.classList.add('active');
+          }
+          renderCommands(document.getElementById('searchInput').value);
+        });
+      });
+
       renderCommands();
 
       window.addEventListener('message', event => {
@@ -191,6 +242,7 @@ function getWebviewContent(commands) {
   </body>
   </html>`;
 }
+
 
 function deactivate() {}
 
