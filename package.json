@@ -4,18 +4,24 @@
   "description": "A command palette companion for common CLI snippets (Docker, Git, etc.)",
   "version": "0.0.1",
   "engines": {
-    "vscode": "^1.80.0"
+    "vscode": "^1.102.0"
   },
-  "categories": ["Other"],
+  "categories": [
+    "Other"
+  ],
   "main": "./extension.js",
   "activationEvents": [
-    "onCommand:cliCompanion.showCLI"
+      "onCommand:cliCompanion.showCLI"
   ],
   "contributes": {
     "commands": [
       {
         "command": "cliCompanion.showCLI",
         "title": "CLI Companion: Show Command Palette"
+      },
+      {
+        "command": "cliCompanion.showFloating",
+        "title": "CLI Companion: Show Floating UI"
       }
     ]
   },
@@ -25,11 +31,11 @@
     "test": "node ./test/runTest.js"
   },
   "devDependencies": {
-    "@types/vscode": "^1.102.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "20.x",
-    "eslint": "^9.25.1",
+    "@types/vscode": "^1.80.0",
     "@vscode/test-cli": "^0.0.11",
-    "@vscode/test-electron": "^2.5.2"
+    "@vscode/test-electron": "^2.5.2",
+    "eslint": "^9.25.1"
   }
 }
