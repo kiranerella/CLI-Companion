@@ -87,6 +87,21 @@ function getWebviewContent(commands) {
         backdrop-filter: blur(6px);
       }
 
+      body.compact .command {
+        padding: 6px 10px;
+        font-size: 0.85rem;
+      }
+
+      body.compact .category {
+        font-size: 0.95rem;
+        margin: 16px 0 6px;
+      }
+
+      body.compact #searchInput {
+        padding: 6px;
+        font-size: 0.9rem;
+      }
+
       .glass {
         background: rgba(0, 0, 0, 0.45);
         border-radius: 12px;
@@ -167,6 +182,12 @@ function getWebviewContent(commands) {
   <body>
     <div class="glass">
       <h1>🚀 CLI Companion</h1>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <label style="font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="compactToggle" />
+          Compact Mode
+        </label>
+      </div>
       <input type="text" id="searchInput" placeholder="Search commands or tags..." />
       <div class="tag-bar">${tagsHTML}</div>
       <div id="commandsContainer"></div>
@@ -230,8 +251,19 @@ function getWebviewContent(commands) {
           renderCommands(document.getElementById('searchInput').value);
         });
       });
+      document.getElementById('compactToggle').addEventListener('change', e => {
+        document.body.classList.toggle('compact', e.target.checked);
+      });
+      if (window.innerWidth < 500) {
+        document.getElementById('compactToggle').checked = true;
+        document.body.classList.add('compact');
+      }
+
+
 
       renderCommands();
+
+      
 
       window.addEventListener('message', event => {
         if (event.data.command === 'copied') {
