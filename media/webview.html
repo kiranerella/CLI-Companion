@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>CLI Companion</title>
+  <style>
+    /* styling goes here */
+  </style>
+</head>
+<body>
+  <h1>⭐ CLI Companion</h1>
+  <div class="tag-bar">
+    <!-- Injected from extension.js -->
+    <script>
+      const tags = {{tags}};
+      document.write(tags.map(tag => `<button class="tag-btn" data-tag="${tag}">${tag}</button>`).join(''));
+    </script>
+  </div>
+  <div class="actions">
+    <button onclick="exportFavorites()">📤 Export Favorites</button>
+  </div>
+  <div id="commands"></div>
+  <script>
+    const vscode = acquireVsCodeApi();
+    const commands = {{commands}};
+    let favorites = new Set({{favorites}});
+    let selectedTag = null;
+
+    function renderCommands() {
+      const container = document.getElementById('commands');
+      container.innerHTML = '';
+      commands.forEach(cmd => {
+        if (!selectedTag || (cmd.tags && cmd.tags.includes(selectedTag))) {
+          const div = document.createElement('div');
+          div.className = 'command';
+          div.innerHTML = `
+            <strong>${cmd.label}</strong>
+            <div>${cmd.command}</div>
+            <span class="favorite-btn ${favorites.has(cmd.command) ? '' : 'inactive'}"
+              onclick="toggleFavorite('${cmd.command}')">${favorites.has(cmd.command) ? '★' : '☆'}</span>
+            <button onclick="copyCommand('${cmd.command}')">📋 Copy</button>
+          `;
+          container.appendChild(div);
+        }
+      });
+    }
+
+    function copyCommand(cmd) {
+      vscode.postMessage({ command: 'copy', text: cmd });
+    }
+
+    function toggleFavorite(cmd) {
+      vscode.postMessage({ command: 'toggleFavorite', commandText: cmd });
+    }
+
+    function exportFavorites() {
+      vscode.postMessage({ command: 'exportFavorites' });
+    }
+
+    window.addEventListener('message', event => {
+      const msg = event.data;
+      if (msg.command === 'favoritesUpdated') {
+        favorites = new Set(msg.favorites);
+        renderCommands();
+      }
+      if (msg.command === 'copied') {
+        alert('📋 Copied to clipboard!');
+      }
+    });
+
+    renderCommands();
+  </script>
+</body>
+</html>
